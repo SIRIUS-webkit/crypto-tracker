@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Crypto Trading Tracker</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+      }
+
+      .summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        padding: 30px;
+        background: #f8f9fa;
+        border-bottom: 2px solid #e9ecef;
+      }
+
+      .summary-card {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .summary-card h3 {
+        color: #6c757d;
+        font-size: 0.9em;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+      }
+
+      .summary-card .value {
+        font-size: 1.8em;
+        font-weight: bold;
+        color: #495057;
+      }
+
+      .summary-card.profit .value {
+        color: #28a745;
+      }
+
+      .summary-card.loss .value {
+        color: #dc3545;
+      }
+
+      .form-section {
+        padding: 30px;
+        background: #f8f9fa;
+        border-bottom: 2px solid #e9ecef;
+      }
+
+      .form-section h2 {
+        margin-bottom: 20px;
+        color: #495057;
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .form-group label {
+        margin-bottom: 5px;
+        color: #495057;
+        font-weight: 600;
+        font-size: 0.9em;
+      }
+
+      .form-group input,
+      .form-group select {
+        padding: 10px;
+        border: 2px solid #e9ecef;
+        border-radius: 5px;
+        font-size: 1em;
+        transition: border-color 0.3s;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      .btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 5px;
+        font-size: 1em;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+      }
+
+      .table-section {
+        padding: 30px;
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+      }
+
+      thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      th {
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.9em;
+        text-transform: uppercase;
+      }
+
+      td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #e9ecef;
+      }
+
+      tbody tr:hover {
+        background: #f8f9fa;
+      }
+
+      .buy {
+        color: #28a745;
+        font-weight: 600;
+      }
+
+      .sell {
+        color: #dc3545;
+        font-weight: 600;
+      }
+
+      .delete-btn {
+        background: #dc3545;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 0.85em;
+      }
+
+      .delete-btn:hover {
+        background: #c82333;
+      }
+
+      .export-section {
+        padding: 20px 30px;
+        background: #f8f9fa;
+        text-align: center;
+      }
+
+      .export-btn {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 5px;
+        font-size: 1em;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+
+      .export-btn:hover {
+        transform: translateY(-2px);
+        background: #218838;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>📊 Crypto Trading Tracker</h1>
+        <p>Track your cryptocurrency buy and sell transactions</p>
+      </div>
+
+      <div class="summary">
+        <div class="summary-card">
+          <h3>Total Invested</h3>
+          <div class="value" id="totalInvested">$0.00</div>
+        </div>
+        <div class="summary-card">
+          <h3>Total Proceeds</h3>
+          <div class="value" id="totalProceeds">$0.00</div>
+        </div>
+        <div class="summary-card">
+          <h3>Total Fees</h3>
+          <div class="value" id="totalFees">$0.00</div>
+        </div>
+        <div class="summary-card" id="realizedCard">
+          <h3>Realized P/L</h3>
+          <div class="value" id="realizedPL">$0.00</div>
+        </div>
+      </div>
+
+      <div class="form-section" style="padding: 20px 30px; background: white">
+        <h2 style="margin-bottom: 15px">📈 Monthly Performance Summary</h2>
+        <p style="color: #6c757d; margin-bottom: 15px; font-size: 0.95em">
+          Track your monthly investment, profit/loss, and portfolio performance
+        </p>
+        <div id="monthlySummarySection"></div>
+      </div>
+
+      <div class="form-section" style="padding: 20px 30px; background: white">
+        <h2 style="margin-bottom: 15px">
+          💰 Current Holdings & Unrealized P/L
+        </h2>
+        <p style="color: #6c757d; margin-bottom: 15px; font-size: 0.95em">
+          Enter current market prices to see your unrealized profit/loss on
+          holdings
+        </p>
+        <div id="holdingsSection"></div>
+      </div>
+
+      <div class="form-section">
+        <h2>Add Transaction</h2>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="date" required />
+          </div>
+          <div class="form-group">
+            <label>Type</label>
+            <select id="type" required>
+              <option value="BUY">BUY</option>
+              <option value="SELL">SELL</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Cryptocurrency</label>
+            <input
+              type="text"
+              id="crypto"
+              placeholder="BTC, ETH, etc."
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label>Amount</label>
+            <input
+              type="number"
+              id="amount"
+              step="0.00000001"
+              placeholder="0.00"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label>Price per Unit ($)</label>
+            <input
+              type="number"
+              id="price"
+              step="0.01"
+              placeholder="0.00"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label>Fees ($)</label>
+            <input
+              type="number"
+              id="fees"
+              step="0.01"
+              placeholder="0.00"
+              value="0"
+            />
+          </div>
+        </div>
+        <button class="btn" onclick="addTransaction()">Add Transaction</button>
+      </div>
+
+      <div class="table-section">
+        <h2 style="margin-bottom: 20px; color: #495057">Transaction History</h2>
+
+        <!-- Filter Controls -->
+        <div
+          style="
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+          "
+        >
+          <h3 style="margin-bottom: 15px; color: #495057; font-size: 1.1em">
+            🔍 Filter Transactions
+          </h3>
+          <div
+            style="
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+              gap: 15px;
+              margin-bottom: 15px;
+            "
+          >
+            <div class="form-group">
+              <label>Transaction Type</label>
+              <select id="filterType" onchange="applyFilters()">
+                <option value="">All Types</option>
+                <option value="BUY">BUY Only</option>
+                <option value="SELL">SELL Only</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Cryptocurrency</label>
+              <select id="filterCrypto" onchange="applyFilters()">
+                <option value="">All Cryptocurrencies</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Date From</label>
+              <input
+                type="date"
+                id="filterDateFrom"
+                onchange="applyFilters()"
+              />
+            </div>
+            <div class="form-group">
+              <label>Date To</label>
+              <input type="date" id="filterDateTo" onchange="applyFilters()" />
+            </div>
+          </div>
+          <div style="text-align: center">
+            <button
+              class="btn"
+              onclick="clearFilters()"
+              style="background: #6c757d; margin-right: 10px"
+            >
+              Clear Filters
+            </button>
+            <span
+              id="filterResults"
+              style="color: #495057; font-weight: 600"
+            ></span>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Crypto</th>
+              <th>Amount</th>
+              <th>Price/Unit</th>
+              <th>Total Value</th>
+              <th>Fees</th>
+              <th>Net Amount</th>
+              <th>Balance</th>
+              <th>Avg Buy Price</th>
+              <th>P/L per Trade</th>
+              <th>Cumulative P/L</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="transactionTable">
+            <tr>
+              <td
+                colspan="13"
+                style="text-align: center; color: #6c757d; padding: 40px"
+              >
+                No transactions yet. Add your first transaction above!
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="export-section">
+        <button class="export-btn" onclick="exportToCSV()">
+          📥 Export to CSV (Excel Compatible)
+        </button>
+      </div>
+    </div>
+
+    <!-- API Client -->
+    <script src="api.js"></script>
+
+    <script>
+      let transactions = [];
+      const currentPrices = {};
+      let isLoading = false;
+
+      // Filter state
+      const filters = {
+        type: "",
+        crypto: "",
+        dateFrom: "",
+        dateTo: "",
+      };
+
+      // Loading indicator functions
+      function showLoading(message = "Loading...") {
+        isLoading = true;
+        const existingLoader = document.getElementById("loadingIndicator");
+        if (existingLoader) existingLoader.remove();
+
+        const loader = document.createElement("div");
+        loader.id = "loadingIndicator";
+        loader.style.cssText = `
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0,0,0,0.5);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 9999;
+          color: white;
+          font-size: 18px;
+        `;
+        loader.innerHTML = `<div style="text-align: center;"><div style="margin-bottom: 10px;">⏳</div>${message}</div>`;
+        document.body.appendChild(loader);
+      }
+
+      function hideLoading() {
+        isLoading = false;
+        const loader = document.getElementById("loadingIndicator");
+        if (loader) loader.remove();
+      }
+
+      // Show error messages
+      function showError(message) {
+        alert(`Error: ${message}`);
+      }
+
+      // Load transactions from database
+      async function loadTransactions() {
+        try {
+          showLoading("Loading transactions...");
+          const response = await api.getTransactions();
+          transactions = response.data || [];
+          render();
+        } catch (error) {
+          console.error("Failed to load transactions:", error);
+          showError("Failed to load transactions from database");
+          transactions = [];
+        } finally {
+          hideLoading();
+        }
+      }
+
+      const dateInput = document.getElementById("date");
+      if (dateInput) {
+        dateInput.valueAsDate = new Date();
+      }
+
+      const currencyFormatter = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+
+      function formatCurrency(value) {
+        return currencyFormatter.format(Number.isFinite(value) ? value : 0);
+      }
+
+      function calculateHoldings() {
+        const holdings = {};
+
+        transactions.forEach((tx) => {
+          const key = tx.crypto;
+          if (!holdings[key]) {
+            holdings[key] = { balance: 0, cost: 0 };
+          }
+
+          if (tx.type === "BUY") {
+            holdings[key].balance += tx.amount;
+            holdings[key].cost += tx.totalValue + tx.fees;
+          } else {
+            const asset = holdings[key];
+            const avgCost = asset.balance > 0 ? asset.cost / asset.balance : 0;
+            asset.balance -= tx.amount;
+            asset.cost -= avgCost * tx.amount;
+            if (asset.cost < 0 && asset.cost > -1e-8) {
+              asset.cost = 0;
+            }
+          }
+        });
+
+        Object.values(holdings).forEach((asset) => {
+          asset.avg = asset.balance > 0 ? asset.cost / asset.balance : 0;
+        });
+
+        return holdings;
+      }
+
+      async function addTransaction() {
+        if (!dateInput || isLoading) {
+          return;
+        }
+
+        const date = dateInput.value;
+        const type = document.getElementById("type").value;
+        const cryptoInput = document.getElementById("crypto").value.trim();
+        const crypto = cryptoInput.toUpperCase();
+        const amount = parseFloat(document.getElementById("amount").value);
+        const price = parseFloat(document.getElementById("price").value);
+        const fees = parseFloat(document.getElementById("fees").value) || 0;
+
+        if (
+          !date ||
+          !crypto ||
+          !Number.isFinite(amount) ||
+          amount <= 0 ||
+          !Number.isFinite(price) ||
+          price <= 0
+        ) {
+          alert("Please fill in all required fields with valid values.");
+          return;
+        }
+
+        if (type === "SELL") {
+          const holdings = calculateHoldings();
+          const available = holdings[crypto]?.balance || 0;
+
+          if (amount - available > 1e-8) {
+            alert(
+              `Cannot sell ${amount} ${crypto}. You currently hold ${available.toFixed(
+                8
+              )} ${crypto}.`
+            );
+            return;
+          }
+        }
+
+        try {
+          showLoading("Adding transaction...");
+
+          const transactionData = {
+            date,
+            type,
+            crypto,
+            amount,
+            price,
+            fees,
+          };
+
+          const response = await api.createTransaction(transactionData);
+
+          if (response.success) {
+            // Add to local array with the returned data (including _id)
+            transactions.push(response.data);
+
+            resetForm();
+            render();
+            updateCryptoFilter();
+          } else {
+            throw new Error(response.error || "Failed to create transaction");
+          }
+        } catch (error) {
+          console.error("Failed to add transaction:", error);
+          showError(`Failed to add transaction: ${error.message}`);
+        } finally {
+          hideLoading();
+        }
+      }
+
+      function resetForm() {
+        document.getElementById("amount").value = "";
+        document.getElementById("price").value = "";
+        document.getElementById("fees").value = "0";
+        document.getElementById("crypto").value = "";
+        if (dateInput) {
+          dateInput.valueAsDate = new Date();
+        }
+      }
+
+      // Filtering Functions
+      function getFilteredTransactions() {
+        return transactions.filter((tx) => {
+          // Type filter
+          if (filters.type && tx.type !== filters.type) return false;
+
+          // Crypto filter
+          if (filters.crypto && tx.crypto !== filters.crypto) return false;
+
+          // Date range filter
+          if (filters.dateFrom && tx.date < filters.dateFrom) return false;
+          if (filters.dateTo && tx.date > filters.dateTo) return false;
+
+          return true;
+        });
+      }
+
+      function applyFilters() {
+        // Update filter state
+        filters.type = document.getElementById("filterType").value;
+        filters.crypto = document.getElementById("filterCrypto").value;
+        filters.dateFrom = document.getElementById("filterDateFrom").value;
+        filters.dateTo = document.getElementById("filterDateTo").value;
+
+        // Re-render table with filtered data
+        updateTable();
+
+        // Update filter results display
+        const filteredCount = getFilteredTransactions().length;
+        const totalCount = transactions.length;
+        const filterResultsEl = document.getElementById("filterResults");
+
+        if (filteredCount < totalCount) {
+          filterResultsEl.textContent = `Showing ${filteredCount} of ${totalCount} transactions`;
+        } else {
+          filterResultsEl.textContent = "";
+        }
+      }
+
+      function clearFilters() {
+        // Reset filter inputs
+        document.getElementById("filterType").value = "";
+        document.getElementById("filterCrypto").value = "";
+        document.getElementById("filterDateFrom").value = "";
+        document.getElementById("filterDateTo").value = "";
+
+        // Reset filter state
+        filters.type = "";
+        filters.crypto = "";
+        filters.dateFrom = "";
+        filters.dateTo = "";
+
+        // Re-render table
+        updateTable();
+
+        // Clear filter results display
+        document.getElementById("filterResults").textContent = "";
+      }
+
+      function updateCryptoFilter() {
+        const cryptoSelect = document.getElementById("filterCrypto");
+        if (!cryptoSelect) return;
+
+        // Get unique cryptocurrencies from transactions
+        const uniqueCryptos = [
+          ...new Set(transactions.map((tx) => tx.crypto)),
+        ].sort();
+
+        // Save current selection
+        const currentValue = cryptoSelect.value;
+
+        // Clear and repopulate options
+        cryptoSelect.innerHTML =
+          '<option value="">All Cryptocurrencies</option>';
+
+        uniqueCryptos.forEach((crypto) => {
+          const option = document.createElement("option");
+          option.value = crypto;
+          option.textContent = crypto;
+          cryptoSelect.appendChild(option);
+        });
+
+        // Restore selection if it still exists
+        if (uniqueCryptos.includes(currentValue)) {
+          cryptoSelect.value = currentValue;
+        }
+      }
+
+      function render() {
+        updateTable();
+        updateSummary();
+        updateMonthlySummary();
+        updateHoldings();
+        updateCryptoFilter();
+      }
+
+      function updateTable() {
+        const tbody = document.getElementById("transactionTable");
+        if (!tbody) {
+          return;
+        }
+
+        // Use filtered transactions for display
+        const filteredTransactions = getFilteredTransactions();
+
+        if (filteredTransactions.length === 0) {
+          const message =
+            transactions.length === 0
+              ? "No transactions yet. Add your first transaction above!"
+              : "No transactions match the current filters. Try adjusting your filter settings.";
+          tbody.innerHTML = `
+                    <tr>
+                        <td colspan="13" style="text-align: center; color: #6c757d; padding: 40px;">${message}</td>
+                    </tr>
+                `;
+          return;
+        }
+
+        tbody.innerHTML = "";
+
+        // Calculate running totals for filtered transactions
+        // Note: We need to recalculate from all transactions up to each filtered transaction
+        // to maintain accurate running balances and P/L
+        const balances = {};
+        const costBasis = {};
+        const avgPrices = {};
+        let cumulativePL = 0;
+
+        filteredTransactions.forEach((tx, displayIndex) => {
+          // Find the original index of this transaction
+          const originalIndex = transactions.indexOf(tx);
+
+          // Recalculate state up to this transaction (using all transactions, not just filtered)
+          const tempBalances = {};
+          const tempCostBasis = {};
+          const tempAvgPrices = {};
+          let tempCumulativePL = 0;
+
+          for (let i = 0; i <= originalIndex; i++) {
+            const tempTx = transactions[i];
+            const key = tempTx.crypto;
+
+            if (!tempBalances[key]) {
+              tempBalances[key] = 0;
+              tempCostBasis[key] = 0;
+              tempAvgPrices[key] = 0;
+            }
+
+            const prevBalance = tempBalances[key];
+            const prevCost = tempCostBasis[key];
+            const prevAvg = prevBalance > 0 ? prevCost / prevBalance : 0;
+
+            if (tempTx.type === "BUY") {
+              const netCost = tempTx.totalValue + tempTx.fees;
+              tempBalances[key] = prevBalance + tempTx.amount;
+              tempCostBasis[key] = prevCost + netCost;
+              tempAvgPrices[key] =
+                tempBalances[key] > 0
+                  ? tempCostBasis[key] / tempBalances[key]
+                  : 0;
+            } else {
+              const costForSale = prevAvg * tempTx.amount;
+              const proceedsAfterFees = tempTx.totalValue - tempTx.fees;
+              const plPerTrade = proceedsAfterFees - costForSale;
+              tempCumulativePL += plPerTrade;
+
+              tempBalances[key] = prevBalance - tempTx.amount;
+              tempCostBasis[key] = prevCost - costForSale;
+              if (tempCostBasis[key] < 0 && tempCostBasis[key] > -1e-8) {
+                tempCostBasis[key] = 0;
+              }
+              tempAvgPrices[key] =
+                tempBalances[key] > 0
+                  ? tempCostBasis[key] / tempBalances[key]
+                  : 0;
+            }
+          }
+
+          // Now display this transaction with correct running totals
+          const row = tbody.insertRow();
+          const key = tx.crypto;
+
+          // Calculate P/L for this specific transaction
+          let plPerTrade = null;
+          if (tx.type === "SELL") {
+            // Find the state just before this transaction
+            const prevBalances = {};
+            const prevCostBasis = {};
+            let prevCumulativePL = 0;
+
+            for (let i = 0; i < originalIndex; i++) {
+              const prevTx = transactions[i];
+              const prevKey = prevTx.crypto;
+
+              if (!prevBalances[prevKey]) {
+                prevBalances[prevKey] = 0;
+                prevCostBasis[prevKey] = 0;
+              }
+
+              const prevPrevBalance = prevBalances[prevKey];
+              const prevPrevCost = prevCostBasis[prevKey];
+              const prevPrevAvg =
+                prevPrevBalance > 0 ? prevPrevCost / prevPrevBalance : 0;
+
+              if (prevTx.type === "BUY") {
+                const netCost = prevTx.totalValue + prevTx.fees;
+                prevBalances[prevKey] = prevPrevBalance + prevTx.amount;
+                prevCostBasis[prevKey] = prevPrevCost + netCost;
+              } else {
+                const costForSale = prevPrevAvg * prevTx.amount;
+                const proceedsAfterFees = prevTx.totalValue - prevTx.fees;
+                const plPerTrade = proceedsAfterFees - costForSale;
+                prevCumulativePL += plPerTrade;
+
+                prevBalances[prevKey] = prevPrevBalance - prevTx.amount;
+                prevCostBasis[prevKey] = prevPrevCost - costForSale;
+              }
+            }
+
+            const prevBalance = prevBalances[key] || 0;
+            const prevCost = prevCostBasis[key] || 0;
+            const prevAvg = prevBalance > 0 ? prevCost / prevBalance : 0;
+            const costForSale = prevAvg * tx.amount;
+            const proceedsAfterFees = tx.totalValue - tx.fees;
+            plPerTrade = proceedsAfterFees - costForSale;
+          }
+
+          const balanceDisplay = tempBalances[key];
+          const avgDisplay =
+            balanceDisplay > 1e-8 ? formatCurrency(tempAvgPrices[key]) : "-";
+          const plColor =
+            plPerTrade === null || plPerTrade >= 0 ? "#28a745" : "#dc3545";
+          const cumulativeColor = tempCumulativePL >= 0 ? "#28a745" : "#dc3545";
+
+          row.innerHTML = `
+                    <td>${tx.date}</td>
+                    <td class="${tx.type.toLowerCase()}">${tx.type}</td>
+                    <td><strong>${tx.crypto}</strong></td>
+                    <td>${tx.amount.toFixed(8)}</td>
+                    <td>${formatCurrency(tx.price)}</td>
+                    <td>${formatCurrency(tx.totalValue)}</td>
+                    <td>${formatCurrency(tx.fees)}</td>
+                    <td>${formatCurrency(tx.netAmount)}</td>
+                    <td>${balanceDisplay.toFixed(8)}</td>
+                    <td>${avgDisplay}</td>
+                    <td style="color: ${
+                      plPerTrade === null ? "#6c757d" : plColor
+                    }; font-weight: 600;">${
+            plPerTrade === null ? "-" : formatCurrency(plPerTrade)
+          }</td>
+                    <td style="color: ${cumulativeColor}; font-weight: 600;">${formatCurrency(
+            tempCumulativePL
+          )}</td>
+                    <td><button class="delete-btn" onclick="deleteTransaction(${originalIndex})">Delete</button></td>
+                `;
+        });
+      }
+
+      function updateSummary() {
+        const totalInvestedEl = document.getElementById("totalInvested");
+        const totalProceedsEl = document.getElementById("totalProceeds");
+        const totalFeesEl = document.getElementById("totalFees");
+        const realizedPLEl = document.getElementById("realizedPL");
+        const realizedCard = document.getElementById("realizedCard");
+
+        if (
+          !totalInvestedEl ||
+          !totalProceedsEl ||
+          !totalFeesEl ||
+          !realizedPLEl
+        ) {
+          return;
+        }
+
+        let totalInvested = 0;
+        let totalProceeds = 0;
+        let totalFees = 0;
+        let realizedPL = 0;
+
+        // Calculate actual realized P/L using FIFO method (same as table calculation)
+        const balances = {};
+        const costBasis = {};
+
+        transactions.forEach((tx) => {
+          const key = tx.crypto;
+          totalFees += tx.fees;
+
+          if (!balances[key]) {
+            balances[key] = 0;
+            costBasis[key] = 0;
+          }
+
+          if (tx.type === "BUY") {
+            totalInvested += tx.totalValue;
+            const netCost = tx.totalValue + tx.fees;
+            balances[key] += tx.amount;
+            costBasis[key] += netCost;
+          } else {
+            totalProceeds += tx.totalValue;
+            // Calculate P/L for this sell using FIFO
+            const prevBalance = balances[key];
+            const prevAvg = prevBalance > 0 ? costBasis[key] / prevBalance : 0;
+            const costForSale = prevAvg * tx.amount;
+            const proceedsAfterFees = tx.totalValue - tx.fees;
+            const tradeProfit = proceedsAfterFees - costForSale;
+            realizedPL += tradeProfit;
+
+            // Update balances
+            balances[key] -= tx.amount;
+            costBasis[key] -= costForSale;
+            if (costBasis[key] < 0 && costBasis[key] > -1e-8) {
+              costBasis[key] = 0;
+            }
+          }
+        });
+
+        totalInvestedEl.textContent = formatCurrency(totalInvested);
+        totalProceedsEl.textContent = formatCurrency(totalProceeds);
+        totalFeesEl.textContent = formatCurrency(totalFees);
+        realizedPLEl.textContent = formatCurrency(realizedPL);
+        realizedPLEl.dataset.value = realizedPL.toString();
+
+        if (realizedCard) {
+          realizedCard.classList.remove("profit", "loss");
+          realizedCard.classList.add(realizedPL >= 0 ? "profit" : "loss");
+        }
+      }
+
+      function updateMonthlySummary() {
+        const monthlySummarySection = document.getElementById(
+          "monthlySummarySection"
+        );
+        if (!monthlySummarySection) {
+          return;
+        }
+
+        if (transactions.length === 0) {
+          monthlySummarySection.innerHTML =
+            '<p style="color: #6c757d; padding: 20px; text-align: center;">No transactions yet. Monthly summary will appear after you add transactions.</p>';
+          return;
+        }
+
+        // Group transactions by month
+        const monthlyData = {};
+        const balancesByMonth = {};
+        const costBasisByMonth = {};
+
+        transactions.forEach((tx) => {
+          const monthKey = tx.date.substring(0, 7); // YYYY-MM format
+          const crypto = tx.crypto;
+
+          if (!monthlyData[monthKey]) {
+            monthlyData[monthKey] = {
+              invested: 0,
+              proceeds: 0,
+              fees: 0,
+              realizedPL: 0,
+              transactions: 0,
+            };
+          }
+
+          if (!balancesByMonth[monthKey]) {
+            balancesByMonth[monthKey] = {};
+            costBasisByMonth[monthKey] = {};
+          }
+
+          if (!balancesByMonth[monthKey][crypto]) {
+            balancesByMonth[monthKey][crypto] = 0;
+            costBasisByMonth[monthKey][crypto] = 0;
+          }
+
+          monthlyData[monthKey].fees += tx.fees;
+          monthlyData[monthKey].transactions++;
+
+          if (tx.type === "BUY") {
+            monthlyData[monthKey].invested += tx.totalValue;
+            balancesByMonth[monthKey][crypto] += tx.amount;
+            costBasisByMonth[monthKey][crypto] += tx.totalValue + tx.fees;
+          } else {
+            monthlyData[monthKey].proceeds += tx.totalValue;
+
+            // Calculate realized P/L for this sell
+            const prevBalance = balancesByMonth[monthKey][crypto];
+            const prevCost = costBasisByMonth[monthKey][crypto];
+            const avgCost = prevBalance > 0 ? prevCost / prevBalance : 0;
+            const costForSale = avgCost * tx.amount;
+            const proceedsAfterFees = tx.totalValue - tx.fees;
+            const tradeProfit = proceedsAfterFees - costForSale;
+
+            monthlyData[monthKey].realizedPL += tradeProfit;
+
+            balancesByMonth[monthKey][crypto] -= tx.amount;
+            costBasisByMonth[monthKey][crypto] -= costForSale;
+          }
+        });
+
+        // Convert to sorted array
+        const sortedMonths = Object.keys(monthlyData).sort().reverse(); // Most recent first
+
+        let tableRows = "";
+        let totalInvested = 0;
+        let totalProceeds = 0;
+        let totalFees = 0;
+        let totalRealizedPL = 0;
+
+        sortedMonths.forEach((monthKey) => {
+          const data = monthlyData[monthKey];
+          const netCashFlow = data.invested - data.proceeds;
+          const monthName = new Date(monthKey + "-01").toLocaleDateString(
+            "en-US",
+            {
+              year: "numeric",
+              month: "long",
+            }
+          );
+
+          totalInvested += data.invested;
+          totalProceeds += data.proceeds;
+          totalFees += data.fees;
+          totalRealizedPL += data.realizedPL;
+
+          const cashFlowColor = netCashFlow > 0 ? "#dc3545" : "#28a745"; // Red if money out, green if money in
+          const plColor = data.realizedPL >= 0 ? "#28a745" : "#dc3545";
+
+          tableRows += `
+            <tr>
+              <td><strong>${monthName}</strong></td>
+              <td>${formatCurrency(data.invested)}</td>
+              <td>${formatCurrency(data.proceeds)}</td>
+              <td style="color: ${cashFlowColor}; font-weight: 600;">${formatCurrency(
+            netCashFlow
+          )}</td>
+              <td style="color: ${plColor}; font-weight: 600;">${formatCurrency(
+            data.realizedPL
+          )}</td>
+              <td>${formatCurrency(data.fees)}</td>
+              <td style="text-align: center;">${data.transactions}</td>
+            </tr>
+          `;
+        });
+
+        // Add totals row
+        const totalNetCashFlow = totalInvested - totalProceeds;
+        const totalCashFlowColor = totalNetCashFlow > 0 ? "#dc3545" : "#28a745";
+        const totalPlColor = totalRealizedPL >= 0 ? "#28a745" : "#dc3545";
+
+        monthlySummarySection.innerHTML = `
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; margin-bottom: 20px;">
+              <thead style="background: #495057; color: #fff;">
+                <tr>
+                  <th>Month</th>
+                  <th>Invested</th>
+                  <th>Proceeds</th>
+                  <th>Net Cash Flow</th>
+                  <th>Realized P/L</th>
+                  <th>Fees Paid</th>
+                  <th>Transactions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                ${tableRows}
+                <tr style="background: #f8f9fa; font-weight: 600; border-top: 2px solid #495057;">
+                  <td><strong>TOTALS</strong></td>
+                  <td>${formatCurrency(totalInvested)}</td>
+                  <td>${formatCurrency(totalProceeds)}</td>
+                  <td style="color: ${totalCashFlowColor}; font-size: 1.1em;">${formatCurrency(
+          totalNetCashFlow
+        )}</td>
+                  <td style="color: ${totalPlColor}; font-size: 1.1em;">${formatCurrency(
+          totalRealizedPL
+        )}</td>
+                  <td>${formatCurrency(totalFees)}</td>
+                  <td style="text-align: center;">${transactions.length}</td>
+                </tr>
+              </tbody>
+            </table>
+            
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-top: 15px;">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div style="text-align: center;">
+                  <div style="color: #6c757d; font-size: 0.9em; margin-bottom: 5px;">Best Month (P/L)</div>
+                  <div style="font-size: 1.2em; font-weight: 600; color: #28a745;">
+                    ${
+                      sortedMonths.length > 0
+                        ? formatCurrency(
+                            Math.max(
+                              ...sortedMonths.map(
+                                (m) => monthlyData[m].realizedPL
+                              )
+                            )
+                          )
+                        : "$0.00"
+                    }
+                  </div>
+                </div>
+                <div style="text-align: center;">
+                  <div style="color: #6c757d; font-size: 0.9em; margin-bottom: 5px;">Average Monthly P/L</div>
+                  <div style="font-size: 1.2em; font-weight: 600; color: ${
+                    totalRealizedPL / sortedMonths.length >= 0
+                      ? "#28a745"
+                      : "#dc3545"
+                  };">
+                    ${
+                      sortedMonths.length > 0
+                        ? formatCurrency(totalRealizedPL / sortedMonths.length)
+                        : "$0.00"
+                    }
+                  </div>
+                </div>
+                <div style="text-align: center;">
+                  <div style="color: #6c757d; font-size: 0.9em; margin-bottom: 5px;">Trading Months</div>
+                  <div style="font-size: 1.2em; font-weight: 600; color: #495057;">
+                    ${sortedMonths.length}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      function updateHoldings() {
+        const holdingsSection = document.getElementById("holdingsSection");
+        if (!holdingsSection) {
+          return;
+        }
+
+        const holdings = calculateHoldings();
+        const activeHoldings = Object.entries(holdings).filter(
+          ([, data]) => data.balance > 1e-8
+        );
+
+        if (activeHoldings.length === 0) {
+          holdingsSection.innerHTML =
+            '<p style="color: #6c757d; padding: 20px; text-align: center;">No current holdings. All positions closed.</p>';
+          return;
+        }
+
+        let totalUnrealizedPL = 0;
+        let totalCurrentValue = 0;
+        let totalCostBasis = 0;
+
+        let tableRows = "";
+
+        activeHoldings.forEach(([crypto, data]) => {
+          const rawPrice = currentPrices[crypto];
+          const currentPrice = Number.isFinite(rawPrice) ? rawPrice : 0;
+          const currentValue = data.balance * currentPrice;
+          const unrealizedPL = currentValue - data.cost;
+          const unrealizedPct =
+            data.cost > 0 ? (unrealizedPL / data.cost) * 100 : 0;
+
+          totalUnrealizedPL += unrealizedPL;
+          totalCurrentValue += currentValue;
+          totalCostBasis += data.cost;
+
+          const plColor = unrealizedPL >= 0 ? "#28a745" : "#dc3545";
+          const pctColor = unrealizedPct >= 0 ? "#28a745" : "#dc3545";
+
+          tableRows += `
+                    <tr>
+                        <td><strong>${crypto}</strong></td>
+                        <td>${data.balance.toFixed(8)}</td>
+                        <td>${formatCurrency(data.avg)}</td>
+                        <td>${formatCurrency(data.cost)}</td>
+                        <td>
+                            <input type="number" 
+                                   step="0.01" 
+                                   value="${
+                                     Number.isFinite(rawPrice) ? rawPrice : ""
+                                   }"
+                                   placeholder="0.00"
+                                   onchange="updatePrice('${crypto}', this.value)"
+                                   style="width: 110px; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
+                        </td>
+                        <td>${formatCurrency(currentValue)}</td>
+                        <td style="color: ${plColor}; font-weight: 600;">${formatCurrency(
+            unrealizedPL
+          )}</td>
+                        <td style="color: ${pctColor}; font-weight: 600;">${unrealizedPct.toFixed(
+            2
+          )}%</td>
+                    </tr>
+                `;
+        });
+
+        const totalPct =
+          totalCostBasis > 0 ? (totalUnrealizedPL / totalCostBasis) * 100 : 0;
+        const totalPlColor = totalUnrealizedPL >= 0 ? "#28a745" : "#dc3545";
+        const totalPctColor = totalPct >= 0 ? "#28a745" : "#dc3545";
+
+        const realizedPLEl = document.getElementById("realizedPL");
+        const realizedPLValue = realizedPLEl
+          ? parseFloat(realizedPLEl.dataset.value || "0")
+          : 0;
+        const combinedPL = realizedPLValue + totalUnrealizedPL;
+
+        holdingsSection.innerHTML = `
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; margin-bottom: 20px;">
+                        <thead style="background: #495057; color: #fff;">
+                            <tr>
+                                <th>Crypto</th>
+                                <th>Holdings</th>
+                                <th>Avg Cost</th>
+                                <th>Total Cost</th>
+                                <th>Current Price</th>
+                                <th>Current Value</th>
+                                <th>Unrealized P/L</th>
+                                <th>Unrealized P/L %</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRows}
+                    <tr style="background: #f8f9fa; font-weight: 600; border-top: 2px solid #495057;">
+                        <td colspan="3"><strong>TOTALS</strong></td>
+                                <td>${formatCurrency(totalCostBasis)}</td>
+                        <td>-</td>
+                                <td>${formatCurrency(totalCurrentValue)}</td>
+                                <td style="color: ${totalPlColor}; font-size: 1.1em;">${formatCurrency(
+          totalUnrealizedPL
+        )}</td>
+                        <td style="color: ${totalPctColor}; font-size: 1.1em;">${totalPct.toFixed(
+          2
+        )}%</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 20px;">
+                <h3 style="margin-bottom: 15px; color: #495057;">📊 Complete Portfolio Summary</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div>
+                        <div style="color: #6c757d; font-size: 0.9em; margin-bottom: 5px;">Realized P/L (Closed Trades)</div>
+                                <div style="font-size: 1.3em; font-weight: 600; color: ${
+                                  realizedPLValue >= 0 ? "#28a745" : "#dc3545"
+                                };">${formatCurrency(realizedPLValue)}</div>
+                    </div>
+                    <div>
+                        <div style="color: #6c757d; font-size: 0.9em; margin-bottom: 5px;">Unrealized P/L (Current Holdings)</div>
+                                <div style="font-size: 1.3em; font-weight: 600; color: ${totalPlColor};">${formatCurrency(
+          totalUnrealizedPL
+        )}</div>
+                    </div>
+                    <div>
+                        <div style="color: #6c757d; font-size: 0.9em; margin-bottom: 5px;">Total P/L (Realized + Unrealized)</div>
+                                <div style="font-size: 1.5em; font-weight: 700; color: ${
+                                  combinedPL >= 0 ? "#28a745" : "#dc3545"
+                                };">${formatCurrency(combinedPL)}</div>
+                    </div>
+                </div>
+            </div>
+            </div>
+            `;
+      }
+
+      async function deleteTransaction(index) {
+        if (
+          !Number.isInteger(index) ||
+          index < 0 ||
+          index >= transactions.length ||
+          isLoading
+        ) {
+          return;
+        }
+
+        const transaction = transactions[index];
+        const transactionId = transaction._id;
+
+        if (!transactionId) {
+          showError("Transaction ID not found");
+          return;
+        }
+
+        if (confirm("Are you sure you want to delete this transaction?")) {
+          try {
+            showLoading("Deleting transaction...");
+
+            const response = await api.deleteTransaction(transactionId);
+
+            if (response.success) {
+              // Remove from local array
+              transactions.splice(index, 1);
+              render();
+            } else {
+              throw new Error(response.error || "Failed to delete transaction");
+            }
+          } catch (error) {
+            console.error("Failed to delete transaction:", error);
+            showError(`Failed to delete transaction: ${error.message}`);
+          } finally {
+            hideLoading();
+          }
+        }
+      }
+
+      function exportToCSV() {
+        if (transactions.length === 0) {
+          alert("No transactions to export!");
+          return;
+        }
+
+        let csv =
+          "Date,Type,Crypto,Amount,Price per Unit,Total Value,Fees,Net Amount\n";
+
+        transactions.forEach((tx) => {
+          csv +=
+            [
+              tx.date,
+              tx.type,
+              tx.crypto,
+              tx.amount.toFixed(8),
+              tx.price.toFixed(2),
+              tx.totalValue.toFixed(2),
+              tx.fees.toFixed(2),
+              tx.netAmount.toFixed(2),
+            ].join(",") + "\n";
+        });
+
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download =
+          "crypto_transactions_" +
+          new Date().toISOString().split("T")[0] +
+          ".csv";
+        a.click();
+        window.URL.revokeObjectURL(url);
+      }
+
+      function updatePrice(crypto, price) {
+        const normalized = parseFloat(price);
+        currentPrices[crypto] =
+          Number.isFinite(normalized) && normalized >= 0
+            ? normalized
+            : undefined;
+        updateHoldings();
+      }
+
+      // Initialize the application
+      document.addEventListener("DOMContentLoaded", async () => {
+        console.log("🚀 Crypto Trading Tracker initialized");
+        await loadTransactions();
+      });
+
+      // Also initialize if DOM is already loaded
+      if (document.readyState === "loading") {
+        // Still loading, wait for DOMContentLoaded
+      } else {
+        // DOM already loaded
+        loadTransactions();
+      }
+    </script>
+  </body>
+</html>
