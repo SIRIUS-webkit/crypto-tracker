@@ -306,13 +306,15 @@
             />
           </div>
           <div class="form-group">
-            <label>Fees ($)</label>
+            <label>Fees (0.1% auto-calculated)</label>
             <input
               type="number"
               id="fees"
-              step="0.01"
+              step="0.000001"
               placeholder="0.00"
               value="0"
+              readonly
+              style="background-color: #f8f9fa; cursor: not-allowed"
             />
           </div>
         </div>
@@ -574,6 +576,7 @@
         dateInput.valueAsDate = new Date();
       }
 
+      // Standard currency formatter for amounts >= $0.01
       const currencyFormatter = new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: "USD",
@@ -581,8 +584,24 @@
         maximumFractionDigits: 2,
       });
 
+      // High precision formatter for small amounts < $0.01
+      const precisionCurrencyFormatter = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 6,
+      });
+
       function formatCurrency(value) {
-        return currencyFormatter.format(Number.isFinite(value) ? value : 0);
+        const numValue = Number.isFinite(value) ? value : 0;
+
+        // Use high precision for small amounts (like trading fees)
+        if (Math.abs(numValue) < 0.01 && numValue !== 0) {
+          return precisionCurrencyFormatter.format(numValue);
+        }
+
+        // Use standard precision for regular amounts
+        return currencyFormatter.format(numValue);
       }
 
       function calculateHoldings() {
@@ -595,7 +614,10 @@
           }
 
           if (tx.type === "BUY") {
-            holdings[key].balance += tx.amount;
+            // Use receivedAmount (after fee deduction) for balance calculation
+            const actualAmount =
+              tx.receivedAmount || tx.amount - tx.amount * 0.001;
+            holdings[key].balance += actualAmount;
             holdings[key].cost += tx.totalValue + tx.fees;
           } else {
             const asset = holdings[key];
@@ -657,11 +679,30 @@
         try {
           showLoading("Adding transaction...");
 
+          // Calculate total value
+          const totalValue = amount * price;
+
+          // Calculate actual received amounts (after fee deduction)
+          let receivedAmount, receivedProceeds;
+
+          if (type === "BUY") {
+            // For BUY: fee is deducted from crypto amount
+            const feeInCrypto = fees / price;
+            receivedAmount = amount - feeInCrypto;
+            receivedProceeds = null; // Not applicable for BUY
+          } else {
+            // For SELL: amount remains same, but proceeds are reduced by fee
+            receivedAmount = amount; // You sell the full amount
+            receivedProceeds = totalValue - fees; // USD proceeds after fee
+          }
+
           const transactionData = {
             date,
             type,
             crypto,
-            amount,
+            amount: amount, // Original amount entered
+            receivedAmount: receivedAmount, // Crypto received (BUY) or sold (SELL)
+            receivedProceeds: receivedProceeds, // USD received (SELL only)
             price,
             fees,
           };
@@ -689,11 +730,12 @@
       function resetForm() {
         document.getElementById("amount").value = "";
         document.getElementById("price").value = "";
-        document.getElementById("fees").value = "0";
         document.getElementById("crypto").value = "";
         if (dateInput) {
           dateInput.valueAsDate = new Date();
         }
+        // Recalculate fees (should be 0 when amount/price are empty)
+        calculateFees();
       }
 
       // Filtering Functions
@@ -850,7 +892,10 @@
 
             if (tempTx.type === "BUY") {
               const netCost = tempTx.totalValue + tempTx.fees;
-              tempBalances[key] = prevBalance + tempTx.amount;
+              // Use receivedAmount (after fee deduction) for accurate balance calculation
+              const actualAmount =
+                tempTx.receivedAmount || tempTx.amount - tempTx.amount * 0.001;
+              tempBalances[key] = prevBalance + actualAmount;
               tempCostBasis[key] = prevCost + netCost;
               tempAvgPrices[key] =
                 tempBalances[key] > 0
@@ -930,15 +975,46 @@
             plPerTrade === null || plPerTrade >= 0 ? "#28a745" : "#dc3545";
           const cumulativeColor = tempCumulativePL >= 0 ? "#28a745" : "#dc3545";
 
+          // Calculate actual received amount for display
+          let actualAmount, amountDisplay;
+
+          if (tx.type === "BUY") {
+            actualAmount = tx.receivedAmount || tx.amount - tx.amount * 0.001;
+            amountDisplay = actualAmount.toFixed(8);
+          } else {
+            // For SELL: show the amount sold (full amount)
+            actualAmount = tx.amount;
+            amountDisplay = tx.amount.toFixed(8);
+          }
+
+          // Calculate net amount based on transaction type
+          let netAmountDisplay;
+          if (tx.type === "BUY") {
+            // For BUY: net amount is total cost including fees
+            netAmountDisplay = formatCurrency(tx.totalValue + tx.fees);
+          } else {
+            // For SELL: net amount is proceeds after fees
+            const netProceeds = tx.receivedProceeds || tx.totalValue - tx.fees;
+            netAmountDisplay = formatCurrency(netProceeds);
+          }
+
           row.innerHTML = `
                     <td>${tx.date}</td>
                     <td class="${tx.type.toLowerCase()}">${tx.type}</td>
                     <td><strong>${tx.crypto}</strong></td>
-                    <td>${tx.amount.toFixed(8)}</td>
+                    <td title="${
+                      tx.type === "BUY"
+                        ? "Crypto received after 0.1% fee deduction"
+                        : "Crypto amount sold"
+                    }">${amountDisplay}</td>
                     <td>${formatCurrency(tx.price)}</td>
                     <td>${formatCurrency(tx.totalValue)}</td>
-                    <td>${formatCurrency(tx.fees)}</td>
-                    <td>${formatCurrency(tx.netAmount)}</td>
+                    <td title="0.1% trading fee">${formatCurrency(tx.fees)}</td>
+                    <td title="${
+                      tx.type === "BUY"
+                        ? "Total cost (including fees)"
+                        : "Proceeds received (after fees)"
+                    }">${netAmountDisplay}</td>
                     <td>${balanceDisplay.toFixed(8)}</td>
                     <td>${avgDisplay}</td>
                     <td style="color: ${
@@ -991,16 +1067,22 @@
           if (tx.type === "BUY") {
             totalInvested += tx.totalValue;
             const netCost = tx.totalValue + tx.fees;
-            balances[key] += tx.amount;
+            // Use receivedAmount (after fee deduction) for balance calculation
+            const actualAmount =
+              tx.receivedAmount || tx.amount - tx.amount * 0.001;
+            balances[key] += actualAmount;
             costBasis[key] += netCost;
           } else {
-            totalProceeds += tx.totalValue;
+            // For SELL: use receivedProceeds if available, otherwise calculate
+            const actualProceeds =
+              tx.receivedProceeds || tx.totalValue - tx.fees;
+            totalProceeds += actualProceeds;
+
             // Calculate P/L for this sell using FIFO
             const prevBalance = balances[key];
             const prevAvg = prevBalance > 0 ? costBasis[key] / prevBalance : 0;
             const costForSale = prevAvg * tx.amount;
-            const proceedsAfterFees = tx.totalValue - tx.fees;
-            const tradeProfit = proceedsAfterFees - costForSale;
+            const tradeProfit = actualProceeds - costForSale;
             realizedPL += tradeProfit;
 
             // Update balances
@@ -1072,7 +1154,10 @@
 
           if (tx.type === "BUY") {
             monthlyData[monthKey].invested += tx.totalValue;
-            balancesByMonth[monthKey][crypto] += tx.amount;
+            // Use receivedAmount (after fee deduction) for balance calculation
+            const actualAmount =
+              tx.receivedAmount || tx.amount - tx.amount * 0.001;
+            balancesByMonth[monthKey][crypto] += actualAmount;
             costBasisByMonth[monthKey][crypto] += tx.totalValue + tx.fees;
           } else {
             monthlyData[monthKey].proceeds += tx.totalValue;
@@ -1436,9 +1521,91 @@
         updateHoldings();
       }
 
+      // Auto-calculate fees (0.1% for both BUY and SELL)
+      function calculateFees() {
+        const amount = parseFloat(document.getElementById("amount").value) || 0;
+        const price = parseFloat(document.getElementById("price").value) || 0;
+        const type = document.getElementById("type").value;
+        const totalValue = amount * price;
+
+        // Fee is always 0.1% of total value
+        const feeValue = totalValue * 0.001; // 0.1% of total value in USD
+
+        // Display more precision for small fees, standard precision for larger ones
+        const feeDisplay =
+          feeValue < 0.01 ? feeValue.toFixed(6) : feeValue.toFixed(2);
+        document.getElementById("fees").value = feeDisplay;
+
+        // Update display to show what you'll actually receive
+        updateReceivedDisplay(amount, price, totalValue, feeValue, type);
+      }
+
+      function updateReceivedDisplay(
+        amount,
+        price,
+        totalValue,
+        feeValue,
+        type
+      ) {
+        const amountLabel = document.querySelector('label[for="amount"]');
+
+        // Check if label element exists (DOM might not be ready)
+        if (!amountLabel) {
+          console.warn("Amount label not found - DOM might not be ready");
+          return;
+        }
+
+        if (amount > 0 && price > 0) {
+          if (type === "BUY") {
+            // For BUY: show crypto amount received after fee deduction
+            const feeInCrypto = feeValue / price;
+            const receivedCrypto = amount - feeInCrypto;
+            amountLabel.innerHTML = `Amount (You'll receive: ${receivedCrypto.toFixed(
+              8
+            )} ${document.getElementById("crypto").value || "crypto"})`;
+          } else {
+            // For SELL: show USD proceeds after fee deduction
+            const receivedUSD = totalValue - feeValue;
+            amountLabel.innerHTML = `Amount (You'll receive: $${receivedUSD.toFixed(
+              2
+            )})`;
+          }
+        } else {
+          amountLabel.innerHTML = "Amount";
+        }
+      }
+
+      // Add event listeners for real-time fee calculation
+      function initializeFeeCalculation() {
+        const amountInput = document.getElementById("amount");
+        const priceInput = document.getElementById("price");
+        const typeSelect = document.getElementById("type");
+        const cryptoInput = document.getElementById("crypto");
+
+        if (amountInput && priceInput && typeSelect) {
+          amountInput.addEventListener("input", calculateFees);
+          amountInput.addEventListener("change", calculateFees);
+          priceInput.addEventListener("input", calculateFees);
+          priceInput.addEventListener("change", calculateFees);
+          typeSelect.addEventListener("change", calculateFees);
+          if (cryptoInput) {
+            cryptoInput.addEventListener("input", calculateFees);
+            cryptoInput.addEventListener("change", calculateFees);
+          }
+
+          // Calculate fees on page load if values exist (with a small delay)
+          setTimeout(calculateFees, 100);
+        } else {
+          console.warn("Required input elements not found - retrying in 500ms");
+          // Retry after a short delay if elements aren't found
+          setTimeout(initializeFeeCalculation, 500);
+        }
+      }
+
       // Initialize the application
       document.addEventListener("DOMContentLoaded", async () => {
         console.log("🚀 Crypto Trading Tracker initialized");
+        initializeFeeCalculation();
         await loadTransactions();
       });
 
@@ -1447,6 +1614,7 @@
         // Still loading, wait for DOMContentLoaded
       } else {
         // DOM already loaded
+        initializeFeeCalculation();
         loadTransactions();
       }
     </script>

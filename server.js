@@ -15,9 +15,9 @@ const MONGODB_URI =
 const getMongoURI = () => {
   if (
     MONGODB_URI.includes("mongodb+srv://") &&
-    !MONGODB_URI.includes(".net/crypto-tracker")
+    !MONGODB_URI.includes(".net/test")
   ) {
-    return MONGODB_URI.replace(".net/?", ".net/crypto-tracker?");
+    return MONGODB_URI.replace(".net/?", ".net/test?");
   }
   return MONGODB_URI;
 };

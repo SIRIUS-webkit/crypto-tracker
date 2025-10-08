@@ -24,7 +24,7 @@ async function connectToDatabase() {
     });
 
     await client.connect();
-    const db = client.db();
+    const db = client.db("test");
 
     // Create indexes for better performance (only if not exists)
     try {
