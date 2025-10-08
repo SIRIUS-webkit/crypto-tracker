@@ -10,6 +10,17 @@ const PORT = process.env.PORT || 3000;
 // MongoDB connection
 const MONGODB_URI =
   process.env.MONGODB_URI || "mongodb://localhost:27017/crypto-tracker";
+
+// Add database name if not present in Atlas URI
+const getMongoURI = () => {
+  if (
+    MONGODB_URI.includes("mongodb+srv://") &&
+    !MONGODB_URI.includes(".net/crypto-tracker")
+  ) {
+    return MONGODB_URI.replace(".net/?", ".net/crypto-tracker?");
+  }
+  return MONGODB_URI;
+};
 let db;
 
 // Middleware
@@ -21,12 +32,13 @@ app.use(express.static("./")); // Serve static files from current directory
 async function connectToMongoDB() {
   try {
     console.log("🔗 Attempting to connect to MongoDB...");
+    const finalURI = getMongoURI();
     console.log(
       "📍 Connection URI:",
-      MONGODB_URI.replace(/\/\/.*@/, "//***:***@")
+      finalURI.replace(/\/\/.*@/, "//***:***@")
     );
 
-    const client = new MongoClient(MONGODB_URI);
+    const client = new MongoClient(getMongoURI());
     await client.connect();
     db = client.db();
     console.log("✅ Connected to MongoDB successfully");
