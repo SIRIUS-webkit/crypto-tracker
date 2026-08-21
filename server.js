@@ -89,7 +89,16 @@ app.get("/api/transactions", async (req, res) => {
 // POST /api/transactions - Create new transaction
 app.post("/api/transactions", async (req, res) => {
   try {
-    const { date, type, crypto, amount, price, fees } = req.body;
+    const {
+      date,
+      type,
+      crypto,
+      amount,
+      price,
+      fees,
+      receivedAmount,
+      receivedProceeds,
+    } = req.body;
 
     // Validate required fields
     if (!date || !type || !crypto || !amount || !price) {
@@ -134,6 +143,13 @@ app.post("/api/transactions", async (req, res) => {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+
+    if (receivedAmount != null && !isNaN(parseFloat(receivedAmount))) {
+      transaction.receivedAmount = parseFloat(receivedAmount);
+    }
+    if (receivedProceeds != null && !isNaN(parseFloat(receivedProceeds))) {
+      transaction.receivedProceeds = parseFloat(receivedProceeds);
+    }
 
     const result = await db.collection("transactions").insertOne(transaction);
 

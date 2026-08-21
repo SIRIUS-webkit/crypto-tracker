@@ -77,6 +77,33 @@
         color: #dc3545;
       }
 
+      .summary-card .hint {
+        margin-top: 6px;
+        color: #868e96;
+        font-size: 0.8em;
+        text-transform: none;
+        font-weight: 400;
+      }
+
+      .section-note {
+        color: #6c757d;
+        margin-bottom: 15px;
+        font-size: 0.95em;
+      }
+
+      .filter-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: end;
+        margin-bottom: 20px;
+      }
+
+      .filter-bar .form-group {
+        min-width: 160px;
+        flex: 1;
+      }
+
       .form-section {
         padding: 30px;
         background: #f8f9fa;
@@ -215,69 +242,110 @@
         transform: translateY(-2px);
         background: #218838;
       }
+
+      .pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+        padding: 15px 18px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        border: 1px solid #e9ecef;
+      }
+
+      .pagination-info {
+        color: #495057;
+        font-weight: 600;
+        font-size: 0.95em;
+      }
+
+      .pagination-controls {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .page-btn {
+        background: white;
+        border: 1px solid #dee2e6;
+        color: #495057;
+        padding: 8px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 0.9em;
+        min-width: 40px;
+      }
+
+      .page-btn:hover:not(:disabled) {
+        border-color: #667eea;
+        color: #667eea;
+      }
+
+      .page-btn.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: transparent;
+      }
+
+      .page-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
     </style>
   </head>
   <body>
     <div class="container">
       <div class="header">
-        <h1>📊 Crypto Trading Tracker</h1>
-        <p>Track your cryptocurrency buy and sell transactions</p>
+        <h1>Crypto Trading Tracker</h1>
+        <p>See what you spent, what you sold, and what you still hold</p>
       </div>
 
       <div class="summary">
         <div class="summary-card">
-          <h3>Total Invested</h3>
+          <h3>Spent</h3>
           <div class="value" id="totalInvested">$0.00</div>
+          <div class="hint">Money used to buy coins</div>
         </div>
         <div class="summary-card">
-          <h3>Total Proceeds</h3>
+          <h3>Received</h3>
           <div class="value" id="totalProceeds">$0.00</div>
-        </div>
-        <div class="summary-card">
-          <h3>Total Fees</h3>
-          <div class="value" id="totalFees">$0.00</div>
+          <div class="hint">Money from selling coins</div>
         </div>
         <div class="summary-card" id="realizedCard">
-          <h3>Realized P/L</h3>
+          <h3>Profit / Loss</h3>
           <div class="value" id="realizedPL">$0.00</div>
+          <div class="hint">From completed sells only</div>
         </div>
       </div>
 
       <div class="form-section" style="padding: 20px 30px; background: white">
-        <h2 style="margin-bottom: 15px">📈 Monthly Performance Summary</h2>
-        <p style="color: #6c757d; margin-bottom: 15px; font-size: 0.95em">
-          Track your monthly investment, profit/loss, and portfolio performance
-        </p>
-        <div id="monthlySummarySection"></div>
-      </div>
-
-      <div class="form-section" style="padding: 20px 30px; background: white">
-        <h2 style="margin-bottom: 15px">
-          💰 Current Holdings & Unrealized P/L
-        </h2>
-        <p style="color: #6c757d; margin-bottom: 15px; font-size: 0.95em">
-          Enter current market prices to see your unrealized profit/loss on
-          holdings
+        <h2 style="margin-bottom: 8px">Your coins</h2>
+        <p class="section-note">
+          Enter today’s price to see what your remaining coins are worth.
         </p>
         <div id="holdingsSection"></div>
       </div>
 
       <div class="form-section">
-        <h2>Add Transaction</h2>
+        <h2>Add a trade</h2>
         <div class="form-grid">
           <div class="form-group">
             <label>Date</label>
             <input type="date" id="date" required />
           </div>
           <div class="form-group">
-            <label>Type</label>
+            <label>Buy or sell</label>
             <select id="type" required>
-              <option value="BUY">BUY</option>
-              <option value="SELL">SELL</option>
+              <option value="BUY">Buy</option>
+              <option value="SELL">Sell</option>
             </select>
           </div>
           <div class="form-group">
-            <label>Cryptocurrency</label>
+            <label>Coin</label>
             <input
               type="text"
               id="crypto"
@@ -296,7 +364,7 @@
             />
           </div>
           <div class="form-group">
-            <label>Price per Unit ($)</label>
+            <label>Price ($)</label>
             <input
               type="number"
               id="price"
@@ -305,86 +373,46 @@
               required
             />
           </div>
-          <div class="form-group">
-            <label>Fees (0.1% auto-calculated)</label>
-            <input
-              type="number"
-              id="fees"
-              step="0.000001"
-              placeholder="0.00"
-              value="0"
-              readonly
-              style="background-color: #f8f9fa; cursor: not-allowed"
-            />
-          </div>
+          <input type="hidden" id="fees" value="0" />
         </div>
-        <button class="btn" onclick="addTransaction()">Add Transaction</button>
+        <button class="btn" onclick="addTransaction()">Add trade</button>
       </div>
 
       <div class="table-section">
-        <h2 style="margin-bottom: 20px; color: #495057">Transaction History</h2>
+        <h2 style="margin-bottom: 8px; color: #495057">Trades</h2>
+        <p class="section-note">Newest trades are shown first.</p>
 
-        <!-- Filter Controls -->
-        <div
-          style="
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #e9ecef;
-          "
-        >
-          <h3 style="margin-bottom: 15px; color: #495057; font-size: 1.1em">
-            🔍 Filter Transactions
-          </h3>
-          <div
-            style="
-              display: grid;
-              grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-              gap: 15px;
-              margin-bottom: 15px;
-            "
+        <div class="filter-bar">
+          <div class="form-group">
+            <label>Type</label>
+            <select id="filterType" onchange="applyFilters()">
+              <option value="">All</option>
+              <option value="BUY">Buy</option>
+              <option value="SELL">Sell</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Coin</label>
+            <select id="filterCrypto" onchange="applyFilters()">
+              <option value="">All coins</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>From</label>
+            <input type="date" id="filterDateFrom" onchange="applyFilters()" />
+          </div>
+          <div class="form-group">
+            <label>To</label>
+            <input type="date" id="filterDateTo" onchange="applyFilters()" />
+          </div>
+          <button
+            class="btn"
+            onclick="clearFilters()"
+            style="background: #6c757d"
           >
-            <div class="form-group">
-              <label>Transaction Type</label>
-              <select id="filterType" onchange="applyFilters()">
-                <option value="">All Types</option>
-                <option value="BUY">BUY Only</option>
-                <option value="SELL">SELL Only</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Cryptocurrency</label>
-              <select id="filterCrypto" onchange="applyFilters()">
-                <option value="">All Cryptocurrencies</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Date From</label>
-              <input
-                type="date"
-                id="filterDateFrom"
-                onchange="applyFilters()"
-              />
-            </div>
-            <div class="form-group">
-              <label>Date To</label>
-              <input type="date" id="filterDateTo" onchange="applyFilters()" />
-            </div>
-          </div>
-          <div style="text-align: center">
-            <button
-              class="btn"
-              onclick="clearFilters()"
-              style="background: #6c757d; margin-right: 10px"
-            >
-              Clear Filters
-            </button>
-            <span
-              id="filterResults"
-              style="color: #495057; font-weight: 600"
-            ></span>
-          </div>
+            Clear
+          </button>
+          <span id="filterResults" style="color: #495057; font-weight: 600"></span>
         </div>
 
         <table>
@@ -392,36 +420,30 @@
             <tr>
               <th>Date</th>
               <th>Type</th>
-              <th>Crypto</th>
+              <th>Coin</th>
               <th>Amount</th>
-              <th>Price/Unit</th>
-              <th>Total Value</th>
-              <th>Fees</th>
-              <th>Net Amount</th>
-              <th>Balance</th>
-              <th>Avg Buy Price</th>
-              <th>P/L per Trade</th>
-              <th>Cumulative P/L</th>
-              <th>Action</th>
+              <th>Price</th>
+              <th>Total</th>
+              <th>Profit</th>
+              <th></th>
             </tr>
           </thead>
           <tbody id="transactionTable">
             <tr>
               <td
-                colspan="13"
+                colspan="8"
                 style="text-align: center; color: #6c757d; padding: 40px"
               >
-                No transactions yet. Add your first transaction above!
+                No trades yet. Add your first trade above.
               </td>
             </tr>
           </tbody>
         </table>
+        <div id="pagination" class="pagination" style="display: none"></div>
       </div>
 
       <div class="export-section">
-        <button class="export-btn" onclick="exportToCSV()">
-          📥 Export to CSV (Excel Compatible)
-        </button>
+        <button class="export-btn" onclick="exportToCSV()">Export CSV</button>
       </div>
     </div>
 
@@ -518,6 +540,121 @@
         dateTo: "",
       };
 
+      let currentPage = 1;
+      const pageSize = 10;
+
+      function getDateValue(tx) {
+        if (!tx || tx.date == null) return "";
+        return String(tx.date).slice(0, 10);
+      }
+
+      function compareTxChrono(a, b) {
+        const da = getDateValue(a);
+        const db = getDateValue(b);
+        if (da !== db) return da < db ? -1 : 1;
+        const ia = String(a._id || "");
+        const ib = String(b._id || "");
+        if (ia !== ib) return ia < ib ? -1 : 1;
+        return 0;
+      }
+
+      function sortTransactionsChrono() {
+        transactions.sort(compareTxChrono);
+      }
+
+      function formatDate(dateStr) {
+        const raw = typeof dateStr === "string" ? dateStr.slice(0, 10) : "";
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return dateStr || "";
+        const d = new Date(`${raw}T12:00:00`);
+        return d.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
+      }
+
+      function getBuyQuantity(tx) {
+        if (Number.isFinite(tx.receivedAmount)) {
+          return tx.receivedAmount;
+        }
+        const fees = Number(tx.fees) || 0;
+        const price = Number(tx.price) || 0;
+        if (fees > 0 && price > 0) {
+          return tx.amount - fees / price;
+        }
+        return tx.amount;
+      }
+
+      function getSellQuantity(tx) {
+        return tx.amount;
+      }
+
+      function getSellProceeds(tx) {
+        if (Number.isFinite(tx.receivedProceeds)) {
+          return tx.receivedProceeds;
+        }
+        return tx.totalValue - (Number(tx.fees) || 0);
+      }
+
+      function clampDust(balances, costBasis, key) {
+        if (Math.abs(balances[key]) < 1e-8) {
+          balances[key] = 0;
+          if (costBasis) costBasis[key] = 0;
+        }
+        if (costBasis && costBasis[key] < 0 && costBasis[key] > -1e-6) {
+          costBasis[key] = 0;
+        }
+      }
+
+      function applyLedgerTx(state, tx) {
+        const key = tx.crypto;
+        if (!state.balances[key]) {
+          state.balances[key] = 0;
+          state.costBasis[key] = 0;
+        }
+
+        const prevBalance = state.balances[key];
+        const prevCost = state.costBasis[key];
+        const prevAvg = prevBalance > 0 ? prevCost / prevBalance : 0;
+        let plPerTrade = null;
+
+        if (tx.type === "BUY") {
+          state.balances[key] = prevBalance + getBuyQuantity(tx);
+          state.costBasis[key] = prevCost + tx.totalValue + (tx.fees || 0);
+        } else {
+          const qty = getSellQuantity(tx);
+          const costForSale = prevAvg * qty;
+          plPerTrade = getSellProceeds(tx) - costForSale;
+          state.realizedPL += plPerTrade;
+          state.balances[key] = prevBalance - qty;
+          state.costBasis[key] = prevCost - costForSale;
+        }
+
+        clampDust(state.balances, state.costBasis, key);
+
+        return {
+          balance: state.balances[key],
+          avg:
+            state.balances[key] > 0
+              ? state.costBasis[key] / state.balances[key]
+              : 0,
+          plPerTrade,
+          realizedPL: state.realizedPL,
+        };
+      }
+
+      function computeLedgerSnapshots() {
+        const state = { balances: {}, costBasis: {}, realizedPL: 0 };
+        const snapshots = new Map();
+        transactions.forEach((tx, index) => {
+          snapshots.set(tx, {
+            index,
+            ...applyLedgerTx(state, tx),
+          });
+        });
+        return snapshots;
+      }
+
       // Loading indicator functions
       function showLoading(message = "Loading...") {
         isLoading = true;
@@ -561,6 +698,8 @@
           showLoading("Loading transactions...");
           const response = await api.getTransactions();
           transactions = response.data || [];
+          sortTransactionsChrono();
+          currentPage = 1;
           render();
         } catch (error) {
           console.error("Failed to load transactions:", error);
@@ -604,6 +743,19 @@
         return currencyFormatter.format(numValue);
       }
 
+      function formatAmount(value) {
+        const n = Number(value) || 0;
+        const abs = Math.abs(n);
+        if (abs === 0) return "0";
+        if (abs >= 1000) {
+          return n.toLocaleString("en-US", { maximumFractionDigits: 2 });
+        }
+        if (abs >= 1) {
+          return n.toLocaleString("en-US", { maximumFractionDigits: 4 });
+        }
+        return n.toFixed(8).replace(/\.?0+$/, "");
+      }
+
       function calculateHoldings() {
         const holdings = {};
 
@@ -614,17 +766,18 @@
           }
 
           if (tx.type === "BUY") {
-            // Use receivedAmount (after fee deduction) for balance calculation
-            const actualAmount =
-              tx.receivedAmount || tx.amount - tx.amount * 0.001;
-            holdings[key].balance += actualAmount;
-            holdings[key].cost += tx.totalValue + tx.fees;
+            holdings[key].balance += getBuyQuantity(tx);
+            holdings[key].cost += tx.totalValue + (tx.fees || 0);
           } else {
             const asset = holdings[key];
             const avgCost = asset.balance > 0 ? asset.cost / asset.balance : 0;
-            asset.balance -= tx.amount;
-            asset.cost -= avgCost * tx.amount;
-            if (asset.cost < 0 && asset.cost > -1e-8) {
+            asset.balance -= getSellQuantity(tx);
+            asset.cost -= avgCost * getSellQuantity(tx);
+            if (Math.abs(asset.balance) < 1e-8) {
+              asset.balance = 0;
+              asset.cost = 0;
+            }
+            if (asset.cost < 0 && asset.cost > -1e-6) {
               asset.cost = 0;
             }
           }
@@ -712,6 +865,8 @@
           if (response.success) {
             // Add to local array with the returned data (including _id)
             transactions.push(response.data);
+            sortTransactionsChrono();
+            currentPage = 1;
 
             resetForm();
             render();
@@ -741,16 +896,11 @@
       // Filtering Functions
       function getFilteredTransactions() {
         return transactions.filter((tx) => {
-          // Type filter
           if (filters.type && tx.type !== filters.type) return false;
-
-          // Crypto filter
           if (filters.crypto && tx.crypto !== filters.crypto) return false;
-
-          // Date range filter
-          if (filters.dateFrom && tx.date < filters.dateFrom) return false;
-          if (filters.dateTo && tx.date > filters.dateTo) return false;
-
+          const txDate = getDateValue(tx);
+          if (filters.dateFrom && txDate < filters.dateFrom) return false;
+          if (filters.dateTo && txDate > filters.dateTo) return false;
           return true;
         });
       }
@@ -761,6 +911,7 @@
         filters.crypto = document.getElementById("filterCrypto").value;
         filters.dateFrom = document.getElementById("filterDateFrom").value;
         filters.dateTo = document.getElementById("filterDateTo").value;
+        currentPage = 1;
 
         // Re-render table with filtered data
         updateTable();
@@ -771,7 +922,7 @@
         const filterResultsEl = document.getElementById("filterResults");
 
         if (filteredCount < totalCount) {
-          filterResultsEl.textContent = `Showing ${filteredCount} of ${totalCount} transactions`;
+          filterResultsEl.textContent = `${filteredCount} of ${totalCount}`;
         } else {
           filterResultsEl.textContent = "";
         }
@@ -789,6 +940,7 @@
         filters.crypto = "";
         filters.dateFrom = "";
         filters.dateTo = "";
+        currentPage = 1;
 
         // Re-render table
         updateTable();
@@ -810,8 +962,7 @@
         const currentValue = cryptoSelect.value;
 
         // Clear and repopulate options
-        cryptoSelect.innerHTML =
-          '<option value="">All Cryptocurrencies</option>';
+        cryptoSelect.innerHTML = '<option value="">All coins</option>';
 
         uniqueCryptos.forEach((crypto) => {
           const option = document.createElement("option");
@@ -829,274 +980,151 @@
       function render() {
         updateTable();
         updateSummary();
-        updateMonthlySummary();
         updateHoldings();
         updateCryptoFilter();
       }
 
       function updateTable() {
         const tbody = document.getElementById("transactionTable");
+        const paginationEl = document.getElementById("pagination");
         if (!tbody) {
           return;
         }
 
-        // Use filtered transactions for display
         const filteredTransactions = getFilteredTransactions();
+        const newestFirst = [...filteredTransactions].reverse();
+        const totalCount = newestFirst.length;
+        const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
 
-        if (filteredTransactions.length === 0) {
+        if (paginationEl) {
+          paginationEl.style.display = totalCount === 0 ? "none" : "flex";
+        }
+
+        if (totalCount === 0) {
           const message =
             transactions.length === 0
-              ? "No transactions yet. Add your first transaction above!"
-              : "No transactions match the current filters. Try adjusting your filter settings.";
+              ? "No trades yet. Add your first trade above."
+              : "No trades match these filters.";
           tbody.innerHTML = `
                     <tr>
-                        <td colspan="13" style="text-align: center; color: #6c757d; padding: 40px;">${message}</td>
+                        <td colspan="8" style="text-align: center; color: #6c757d; padding: 40px;">${message}</td>
                     </tr>
                 `;
           return;
         }
 
+        const snapshots = computeLedgerSnapshots();
+        const start = (currentPage - 1) * pageSize;
+        const pageItems = newestFirst.slice(start, start + pageSize);
+
         tbody.innerHTML = "";
 
-        // Calculate running totals for filtered transactions
-        // Note: We need to recalculate from all transactions up to each filtered transaction
-        // to maintain accurate running balances and P/L
-        const balances = {};
-        const costBasis = {};
-        const avgPrices = {};
-        let cumulativePL = 0;
-
-        filteredTransactions.forEach((tx, displayIndex) => {
-          // Find the original index of this transaction
-          const originalIndex = transactions.indexOf(tx);
-
-          // Recalculate state up to this transaction (using all transactions, not just filtered)
-          const tempBalances = {};
-          const tempCostBasis = {};
-          const tempAvgPrices = {};
-          let tempCumulativePL = 0;
-
-          for (let i = 0; i <= originalIndex; i++) {
-            const tempTx = transactions[i];
-            const key = tempTx.crypto;
-
-            if (!tempBalances[key]) {
-              tempBalances[key] = 0;
-              tempCostBasis[key] = 0;
-              tempAvgPrices[key] = 0;
-            }
-
-            const prevBalance = tempBalances[key];
-            const prevCost = tempCostBasis[key];
-            const prevAvg = prevBalance > 0 ? prevCost / prevBalance : 0;
-
-            if (tempTx.type === "BUY") {
-              const netCost = tempTx.totalValue + tempTx.fees;
-              // Use receivedAmount (after fee deduction) for accurate balance calculation
-              const actualAmount =
-                tempTx.receivedAmount || tempTx.amount - tempTx.amount * 0.001;
-              tempBalances[key] = prevBalance + actualAmount;
-              tempCostBasis[key] = prevCost + netCost;
-              tempAvgPrices[key] =
-                tempBalances[key] > 0
-                  ? tempCostBasis[key] / tempBalances[key]
-                  : 0;
-            } else {
-              const costForSale = prevAvg * tempTx.amount;
-              const proceedsAfterFees = tempTx.totalValue - tempTx.fees;
-              const plPerTrade = proceedsAfterFees - costForSale;
-              tempCumulativePL += plPerTrade;
-
-              tempBalances[key] = prevBalance - tempTx.amount;
-              tempCostBasis[key] = prevCost - costForSale;
-              if (tempCostBasis[key] < 0 && tempCostBasis[key] > -1e-8) {
-                tempCostBasis[key] = 0;
-              }
-              tempAvgPrices[key] =
-                tempBalances[key] > 0
-                  ? tempCostBasis[key] / tempBalances[key]
-                  : 0;
-            }
-          }
-
-          // Now display this transaction with correct running totals
+        pageItems.forEach((tx) => {
+          const snapshot = snapshots.get(tx);
+          const originalIndex = snapshot
+            ? snapshot.index
+            : transactions.indexOf(tx);
           const row = tbody.insertRow();
-          const key = tx.crypto;
-
-          // Calculate P/L for this specific transaction
-          let plPerTrade = null;
-          if (tx.type === "SELL") {
-            // Find the state just before this transaction
-            const prevBalances = {};
-            const prevCostBasis = {};
-            let prevCumulativePL = 0;
-
-            for (let i = 0; i < originalIndex; i++) {
-              const prevTx = transactions[i];
-              const prevKey = prevTx.crypto;
-
-              if (!prevBalances[prevKey]) {
-                prevBalances[prevKey] = 0;
-                prevCostBasis[prevKey] = 0;
-              }
-
-              const prevPrevBalance = prevBalances[prevKey];
-              const prevPrevCost = prevCostBasis[prevKey];
-              const prevPrevAvg =
-                prevPrevBalance > 0 ? prevPrevCost / prevPrevBalance : 0;
-
-              if (prevTx.type === "BUY") {
-                const netCost = prevTx.totalValue + prevTx.fees;
-                prevBalances[prevKey] = prevPrevBalance + prevTx.amount;
-                prevCostBasis[prevKey] = prevPrevCost + netCost;
-              } else {
-                const costForSale = prevPrevAvg * prevTx.amount;
-                const proceedsAfterFees = prevTx.totalValue - prevTx.fees;
-                const plPerTrade = proceedsAfterFees - costForSale;
-                prevCumulativePL += plPerTrade;
-
-                prevBalances[prevKey] = prevPrevBalance - prevTx.amount;
-                prevCostBasis[prevKey] = prevPrevCost - costForSale;
-              }
-            }
-
-            const prevBalance = prevBalances[key] || 0;
-            const prevCost = prevCostBasis[key] || 0;
-            const prevAvg = prevBalance > 0 ? prevCost / prevBalance : 0;
-            const costForSale = prevAvg * tx.amount;
-            const proceedsAfterFees = tx.totalValue - tx.fees;
-            plPerTrade = proceedsAfterFees - costForSale;
-          }
-
-          const balanceDisplay = tempBalances[key];
-          const avgDisplay =
-            balanceDisplay > 1e-8 ? formatCurrency(tempAvgPrices[key]) : "-";
+          const qty =
+            tx.type === "BUY" ? getBuyQuantity(tx) : getSellQuantity(tx);
+          const plPerTrade = snapshot ? snapshot.plPerTrade : null;
           const plColor =
             plPerTrade === null || plPerTrade >= 0 ? "#28a745" : "#dc3545";
-          const cumulativeColor = tempCumulativePL >= 0 ? "#28a745" : "#dc3545";
-
-          // Calculate actual received amount for display
-          let actualAmount, amountDisplay;
-
-          if (tx.type === "BUY") {
-            actualAmount = tx.receivedAmount || tx.amount - tx.amount * 0.001;
-            amountDisplay = actualAmount.toFixed(8);
-          } else {
-            // For SELL: show the amount sold (full amount)
-            actualAmount = tx.amount;
-            amountDisplay = tx.amount.toFixed(8);
-          }
-
-          // Calculate net amount based on transaction type
-          let netAmountDisplay;
-          if (tx.type === "BUY") {
-            // For BUY: net amount is total cost including fees
-            netAmountDisplay = formatCurrency(tx.totalValue + tx.fees);
-          } else {
-            // For SELL: net amount is proceeds after fees
-            const netProceeds = tx.receivedProceeds || tx.totalValue - tx.fees;
-            netAmountDisplay = formatCurrency(netProceeds);
-          }
 
           row.innerHTML = `
-                    <td>${tx.date}</td>
-                    <td class="${tx.type.toLowerCase()}">${tx.type}</td>
+                    <td>${formatDate(tx.date)}</td>
+                    <td class="${tx.type.toLowerCase()}">${
+            tx.type === "BUY" ? "Buy" : "Sell"
+          }</td>
                     <td><strong>${tx.crypto}</strong></td>
-                    <td title="${
-                      tx.type === "BUY"
-                        ? "Crypto received after 0.1% fee deduction"
-                        : "Crypto amount sold"
-                    }">${amountDisplay}</td>
+                    <td>${formatAmount(qty)}</td>
                     <td>${formatCurrency(tx.price)}</td>
                     <td>${formatCurrency(tx.totalValue)}</td>
-                    <td title="0.1% trading fee">${formatCurrency(tx.fees)}</td>
-                    <td title="${
-                      tx.type === "BUY"
-                        ? "Total cost (including fees)"
-                        : "Proceeds received (after fees)"
-                    }">${netAmountDisplay}</td>
-                    <td>${balanceDisplay.toFixed(8)}</td>
-                    <td>${avgDisplay}</td>
                     <td style="color: ${
                       plPerTrade === null ? "#6c757d" : plColor
                     }; font-weight: 600;">${
-            plPerTrade === null ? "-" : formatCurrency(plPerTrade)
+            plPerTrade === null ? "—" : formatCurrency(plPerTrade)
           }</td>
-                    <td style="color: ${cumulativeColor}; font-weight: 600;">${formatCurrency(
-            tempCumulativePL
-          )}</td>
                     <td><button class="delete-btn" onclick="deleteTransaction(${originalIndex})">Delete</button></td>
                 `;
         });
+
+        renderPagination(totalCount, totalPages, start);
+      }
+
+      function goToPage(page) {
+        currentPage = page;
+        updateTable();
+      }
+
+      function renderPagination(totalCount, totalPages, start) {
+        const paginationEl = document.getElementById("pagination");
+        if (!paginationEl) return;
+
+        const end = Math.min(start + pageSize, totalCount);
+        let pageButtons = "";
+        const windowSize = 5;
+        let from = Math.max(1, currentPage - Math.floor(windowSize / 2));
+        let to = Math.min(totalPages, from + windowSize - 1);
+        from = Math.max(1, to - windowSize + 1);
+
+        for (let p = from; p <= to; p++) {
+          pageButtons += `<button class="page-btn ${
+            p === currentPage ? "active" : ""
+          }" onclick="goToPage(${p})">${p}</button>`;
+        }
+
+        paginationEl.innerHTML = `
+          <div class="pagination-info">
+            ${start + 1}–${end} of ${totalCount}
+          </div>
+          <div class="pagination-controls">
+            <button class="page-btn" onclick="goToPage(1)" ${
+              currentPage === 1 ? "disabled" : ""
+            }>First</button>
+            <button class="page-btn" onclick="goToPage(${currentPage - 1})" ${
+              currentPage === 1 ? "disabled" : ""
+            }>Prev</button>
+            ${pageButtons}
+            <button class="page-btn" onclick="goToPage(${currentPage + 1})" ${
+              currentPage === totalPages ? "disabled" : ""
+            }>Next</button>
+            <button class="page-btn" onclick="goToPage(${totalPages})" ${
+              currentPage === totalPages ? "disabled" : ""
+            }>Last</button>
+          </div>
+        `;
       }
 
       function updateSummary() {
         const totalInvestedEl = document.getElementById("totalInvested");
         const totalProceedsEl = document.getElementById("totalProceeds");
-        const totalFeesEl = document.getElementById("totalFees");
         const realizedPLEl = document.getElementById("realizedPL");
         const realizedCard = document.getElementById("realizedCard");
 
-        if (
-          !totalInvestedEl ||
-          !totalProceedsEl ||
-          !totalFeesEl ||
-          !realizedPLEl
-        ) {
+        if (!totalInvestedEl || !totalProceedsEl || !realizedPLEl) {
           return;
         }
 
         let totalInvested = 0;
         let totalProceeds = 0;
-        let totalFees = 0;
-        let realizedPL = 0;
-
-        // Calculate actual realized P/L using FIFO method (same as table calculation)
-        const balances = {};
-        const costBasis = {};
+        const state = { balances: {}, costBasis: {}, realizedPL: 0 };
 
         transactions.forEach((tx) => {
-          const key = tx.crypto;
-          totalFees += tx.fees;
-
-          if (!balances[key]) {
-            balances[key] = 0;
-            costBasis[key] = 0;
-          }
-
           if (tx.type === "BUY") {
             totalInvested += tx.totalValue;
-            const netCost = tx.totalValue + tx.fees;
-            // Use receivedAmount (after fee deduction) for balance calculation
-            const actualAmount =
-              tx.receivedAmount || tx.amount - tx.amount * 0.001;
-            balances[key] += actualAmount;
-            costBasis[key] += netCost;
           } else {
-            // For SELL: use receivedProceeds if available, otherwise calculate
-            const actualProceeds =
-              tx.receivedProceeds || tx.totalValue - tx.fees;
-            totalProceeds += actualProceeds;
-
-            // Calculate P/L for this sell using FIFO
-            const prevBalance = balances[key];
-            const prevAvg = prevBalance > 0 ? costBasis[key] / prevBalance : 0;
-            const costForSale = prevAvg * tx.amount;
-            const tradeProfit = actualProceeds - costForSale;
-            realizedPL += tradeProfit;
-
-            // Update balances
-            balances[key] -= tx.amount;
-            costBasis[key] -= costForSale;
-            if (costBasis[key] < 0 && costBasis[key] > -1e-8) {
-              costBasis[key] = 0;
-            }
+            totalProceeds += getSellProceeds(tx);
           }
+          applyLedgerTx(state, tx);
         });
+
+        const realizedPL = state.realizedPL;
 
         totalInvestedEl.textContent = formatCurrency(totalInvested);
         totalProceedsEl.textContent = formatCurrency(totalProceeds);
-        totalFeesEl.textContent = formatCurrency(totalFees);
         realizedPLEl.textContent = formatCurrency(realizedPL);
         realizedPLEl.dataset.value = realizedPL.toString();
 
@@ -1104,203 +1132,6 @@
           realizedCard.classList.remove("profit", "loss");
           realizedCard.classList.add(realizedPL >= 0 ? "profit" : "loss");
         }
-      }
-
-      function updateMonthlySummary() {
-        const monthlySummarySection = document.getElementById(
-          "monthlySummarySection"
-        );
-        if (!monthlySummarySection) {
-          return;
-        }
-
-        if (transactions.length === 0) {
-          monthlySummarySection.innerHTML =
-            '<p style="color: #6c757d; padding: 20px; text-align: center;">No transactions yet. Monthly summary will appear after you add transactions.</p>';
-          return;
-        }
-
-        // Group transactions by month
-        const monthlyData = {};
-        const balancesByMonth = {};
-        const costBasisByMonth = {};
-
-        transactions.forEach((tx) => {
-          const monthKey = tx.date.substring(0, 7); // YYYY-MM format
-          const crypto = tx.crypto;
-
-          if (!monthlyData[monthKey]) {
-            monthlyData[monthKey] = {
-              invested: 0,
-              proceeds: 0,
-              fees: 0,
-              realizedPL: 0,
-              transactions: 0,
-            };
-          }
-
-          if (!balancesByMonth[monthKey]) {
-            balancesByMonth[monthKey] = {};
-            costBasisByMonth[monthKey] = {};
-          }
-
-          if (!balancesByMonth[monthKey][crypto]) {
-            balancesByMonth[monthKey][crypto] = 0;
-            costBasisByMonth[monthKey][crypto] = 0;
-          }
-
-          monthlyData[monthKey].fees += tx.fees;
-          monthlyData[monthKey].transactions++;
-
-          if (tx.type === "BUY") {
-            monthlyData[monthKey].invested += tx.totalValue;
-            // Use receivedAmount (after fee deduction) for balance calculation
-            const actualAmount =
-              tx.receivedAmount || tx.amount - tx.amount * 0.001;
-            balancesByMonth[monthKey][crypto] += actualAmount;
-            costBasisByMonth[monthKey][crypto] += tx.totalValue + tx.fees;
-          } else {
-            monthlyData[monthKey].proceeds += tx.totalValue;
-
-            // Calculate realized P/L for this sell
-            const prevBalance = balancesByMonth[monthKey][crypto];
-            const prevCost = costBasisByMonth[monthKey][crypto];
-            const avgCost = prevBalance > 0 ? prevCost / prevBalance : 0;
-            const costForSale = avgCost * tx.amount;
-            const proceedsAfterFees = tx.totalValue - tx.fees;
-            const tradeProfit = proceedsAfterFees - costForSale;
-
-            monthlyData[monthKey].realizedPL += tradeProfit;
-
-            balancesByMonth[monthKey][crypto] -= tx.amount;
-            costBasisByMonth[monthKey][crypto] -= costForSale;
-          }
-        });
-
-        // Convert to sorted array
-        const sortedMonths = Object.keys(monthlyData).sort().reverse(); // Most recent first
-
-        let tableRows = "";
-        let totalInvested = 0;
-        let totalProceeds = 0;
-        let totalFees = 0;
-        let totalRealizedPL = 0;
-
-        sortedMonths.forEach((monthKey) => {
-          const data = monthlyData[monthKey];
-          const netCashFlow = data.invested - data.proceeds;
-          const monthName = new Date(monthKey + "-01").toLocaleDateString(
-            "en-US",
-            {
-              year: "numeric",
-              month: "long",
-            }
-          );
-
-          totalInvested += data.invested;
-          totalProceeds += data.proceeds;
-          totalFees += data.fees;
-          totalRealizedPL += data.realizedPL;
-
-          const cashFlowColor = netCashFlow > 0 ? "#dc3545" : "#28a745"; // Red if money out, green if money in
-          const plColor = data.realizedPL >= 0 ? "#28a745" : "#dc3545";
-
-          tableRows += `
-            <tr>
-              <td><strong>${monthName}</strong></td>
-              <td>${formatCurrency(data.invested)}</td>
-              <td>${formatCurrency(data.proceeds)}</td>
-              <td style="color: ${cashFlowColor}; font-weight: 600;">${formatCurrency(
-            netCashFlow
-          )}</td>
-              <td style="color: ${plColor}; font-weight: 600;">${formatCurrency(
-            data.realizedPL
-          )}</td>
-              <td>${formatCurrency(data.fees)}</td>
-              <td style="text-align: center;">${data.transactions}</td>
-            </tr>
-          `;
-        });
-
-        // Add totals row
-        const totalNetCashFlow = totalInvested - totalProceeds;
-        const totalCashFlowColor = totalNetCashFlow > 0 ? "#dc3545" : "#28a745";
-        const totalPlColor = totalRealizedPL >= 0 ? "#28a745" : "#dc3545";
-
-        monthlySummarySection.innerHTML = `
-                <div style="overflow-x: auto;">
-                    <table style="width: 100%; margin-bottom: 20px;">
-              <thead style="background: #495057; color: #fff;">
-                <tr>
-                  <th>Month</th>
-                  <th>Invested</th>
-                  <th>Proceeds</th>
-                  <th>Net Cash Flow</th>
-                  <th>Realized P/L</th>
-                  <th>Fees Paid</th>
-                  <th>Transactions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                ${tableRows}
-                <tr style="background: #f8f9fa; font-weight: 600; border-top: 2px solid #495057;">
-                  <td><strong>TOTALS</strong></td>
-                  <td>${formatCurrency(totalInvested)}</td>
-                  <td>${formatCurrency(totalProceeds)}</td>
-                  <td style="color: ${totalCashFlowColor}; font-size: 1.1em;">${formatCurrency(
-          totalNetCashFlow
-        )}</td>
-                  <td style="color: ${totalPlColor}; font-size: 1.1em;">${formatCurrency(
-          totalRealizedPL
-        )}</td>
-                  <td>${formatCurrency(totalFees)}</td>
-                  <td style="text-align: center;">${transactions.length}</td>
-                </tr>
-              </tbody>
-            </table>
-            
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-top: 15px;">
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                <div style="text-align: center;">
-                  <div style="color: #6c757d; font-size: 0.9em; margin-bottom: 5px;">Best Month (P/L)</div>
-                  <div style="font-size: 1.2em; font-weight: 600; color: #28a745;">
-                    ${
-                      sortedMonths.length > 0
-                        ? formatCurrency(
-                            Math.max(
-                              ...sortedMonths.map(
-                                (m) => monthlyData[m].realizedPL
-                              )
-                            )
-                          )
-                        : "$0.00"
-                    }
-                  </div>
-                </div>
-                <div style="text-align: center;">
-                  <div style="color: #6c757d; font-size: 0.9em; margin-bottom: 5px;">Average Monthly P/L</div>
-                  <div style="font-size: 1.2em; font-weight: 600; color: ${
-                    totalRealizedPL / sortedMonths.length >= 0
-                      ? "#28a745"
-                      : "#dc3545"
-                  };">
-                    ${
-                      sortedMonths.length > 0
-                        ? formatCurrency(totalRealizedPL / sortedMonths.length)
-                        : "$0.00"
-                    }
-                  </div>
-                </div>
-                <div style="text-align: center;">
-                  <div style="color: #6c757d; font-size: 0.9em; margin-bottom: 5px;">Trading Months</div>
-                  <div style="font-size: 1.2em; font-weight: 600; color: #495057;">
-                    ${sortedMonths.length}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
       }
 
       function updateHoldings() {
@@ -1311,129 +1142,63 @@
 
         const holdings = calculateHoldings();
         const activeHoldings = Object.entries(holdings).filter(
-          ([, data]) => data.balance > 1e-8
+          ([, data]) => data.balance > 1e-6 && data.cost >= 1
         );
 
         if (activeHoldings.length === 0) {
           holdingsSection.innerHTML =
-            '<p style="color: #6c757d; padding: 20px; text-align: center;">No current holdings. All positions closed.</p>';
+            '<p style="color: #6c757d; padding: 12px 0;">You do not currently hold any coins.</p>';
           return;
         }
 
-        let totalUnrealizedPL = 0;
-        let totalCurrentValue = 0;
-        let totalCostBasis = 0;
-
         let tableRows = "";
-
         activeHoldings.forEach(([crypto, data]) => {
           const rawPrice = currentPrices[crypto];
-          const currentPrice = Number.isFinite(rawPrice) ? rawPrice : 0;
-          const currentValue = data.balance * currentPrice;
-          const unrealizedPL = currentValue - data.cost;
-          const unrealizedPct =
-            data.cost > 0 ? (unrealizedPL / data.cost) * 100 : 0;
-
-          totalUnrealizedPL += unrealizedPL;
-          totalCurrentValue += currentValue;
-          totalCostBasis += data.cost;
-
-          const plColor = unrealizedPL >= 0 ? "#28a745" : "#dc3545";
-          const pctColor = unrealizedPct >= 0 ? "#28a745" : "#dc3545";
+          const hasPrice = Number.isFinite(rawPrice) && rawPrice > 0;
+          const currentValue = hasPrice ? data.balance * rawPrice : null;
+          const profit = hasPrice ? currentValue - data.cost : null;
+          const plColor =
+            profit == null ? "#6c757d" : profit >= 0 ? "#28a745" : "#dc3545";
 
           tableRows += `
                     <tr>
                         <td><strong>${crypto}</strong></td>
-                        <td>${data.balance.toFixed(8)}</td>
+                        <td>${formatAmount(data.balance)}</td>
                         <td>${formatCurrency(data.avg)}</td>
-                        <td>${formatCurrency(data.cost)}</td>
                         <td>
-                            <input type="number" 
-                                   step="0.01" 
-                                   value="${
-                                     Number.isFinite(rawPrice) ? rawPrice : ""
-                                   }"
-                                   placeholder="0.00"
+                            <input type="number"
+                                   step="0.01"
+                                   value="${hasPrice ? rawPrice : ""}"
+                                   placeholder="Enter price"
                                    onchange="updatePrice('${crypto}', this.value)"
-                                   style="width: 110px; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
+                                   style="width: 120px; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
                         </td>
-                        <td>${formatCurrency(currentValue)}</td>
-                        <td style="color: ${plColor}; font-weight: 600;">${formatCurrency(
-            unrealizedPL
-          )}</td>
-                        <td style="color: ${pctColor}; font-weight: 600;">${unrealizedPct.toFixed(
-            2
-          )}%</td>
+                        <td>${hasPrice ? formatCurrency(currentValue) : "—"}</td>
+                        <td style="color: ${plColor}; font-weight: 600;">${
+            profit == null ? "—" : formatCurrency(profit)
+          }</td>
                     </tr>
                 `;
         });
 
-        const totalPct =
-          totalCostBasis > 0 ? (totalUnrealizedPL / totalCostBasis) * 100 : 0;
-        const totalPlColor = totalUnrealizedPL >= 0 ? "#28a745" : "#dc3545";
-        const totalPctColor = totalPct >= 0 ? "#28a745" : "#dc3545";
-
-        const realizedPLEl = document.getElementById("realizedPL");
-        const realizedPLValue = realizedPLEl
-          ? parseFloat(realizedPLEl.dataset.value || "0")
-          : 0;
-        const combinedPL = realizedPLValue + totalUnrealizedPL;
-
         holdingsSection.innerHTML = `
                 <div style="overflow-x: auto;">
-                    <table style="width: 100%; margin-bottom: 20px;">
-                        <thead style="background: #495057; color: #fff;">
+                    <table style="width: 100%;">
+                        <thead>
                             <tr>
-                                <th>Crypto</th>
-                                <th>Holdings</th>
-                                <th>Avg Cost</th>
-                                <th>Total Cost</th>
-                                <th>Current Price</th>
-                                <th>Current Value</th>
-                                <th>Unrealized P/L</th>
-                                <th>Unrealized P/L %</th>
+                                <th>Coin</th>
+                                <th>You own</th>
+                                <th>Avg buy</th>
+                                <th>Today's price</th>
+                                <th>Worth now</th>
+                                <th>Open profit</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${tableRows}
-                    <tr style="background: #f8f9fa; font-weight: 600; border-top: 2px solid #495057;">
-                        <td colspan="3"><strong>TOTALS</strong></td>
-                                <td>${formatCurrency(totalCostBasis)}</td>
-                        <td>-</td>
-                                <td>${formatCurrency(totalCurrentValue)}</td>
-                                <td style="color: ${totalPlColor}; font-size: 1.1em;">${formatCurrency(
-          totalUnrealizedPL
-        )}</td>
-                        <td style="color: ${totalPctColor}; font-size: 1.1em;">${totalPct.toFixed(
-          2
-        )}%</td>
-                    </tr>
-                </tbody>
-            </table>
-            <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-top: 20px;">
-                <h3 style="margin-bottom: 15px; color: #495057;">📊 Complete Portfolio Summary</h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                    <div>
-                        <div style="color: #6c757d; font-size: 0.9em; margin-bottom: 5px;">Realized P/L (Closed Trades)</div>
-                                <div style="font-size: 1.3em; font-weight: 600; color: ${
-                                  realizedPLValue >= 0 ? "#28a745" : "#dc3545"
-                                };">${formatCurrency(realizedPLValue)}</div>
-                    </div>
-                    <div>
-                        <div style="color: #6c757d; font-size: 0.9em; margin-bottom: 5px;">Unrealized P/L (Current Holdings)</div>
-                                <div style="font-size: 1.3em; font-weight: 600; color: ${totalPlColor};">${formatCurrency(
-          totalUnrealizedPL
-        )}</div>
-                    </div>
-                    <div>
-                        <div style="color: #6c757d; font-size: 0.9em; margin-bottom: 5px;">Total P/L (Realized + Unrealized)</div>
-                                <div style="font-size: 1.5em; font-weight: 700; color: ${
-                                  combinedPL >= 0 ? "#28a745" : "#dc3545"
-                                };">${formatCurrency(combinedPL)}</div>
-                    </div>
+                        </tbody>
+                    </table>
                 </div>
-            </div>
-            </div>
             `;
       }
 
@@ -1455,15 +1220,19 @@
           return;
         }
 
-        if (confirm("Are you sure you want to delete this transaction?")) {
+        if (confirm("Delete this trade?")) {
           try {
             showLoading("Deleting transaction...");
 
             const response = await api.deleteTransaction(transactionId);
 
             if (response.success) {
-              // Remove from local array
               transactions.splice(index, 1);
+              const maxPage = Math.max(
+                1,
+                Math.ceil(getFilteredTransactions().length / pageSize)
+              );
+              if (currentPage > maxPage) currentPage = maxPage;
               render();
             } else {
               throw new Error(response.error || "Failed to delete transaction");
@@ -1479,24 +1248,23 @@
 
       function exportToCSV() {
         if (transactions.length === 0) {
-          alert("No transactions to export!");
+          alert("No trades to export.");
           return;
         }
 
-        let csv =
-          "Date,Type,Crypto,Amount,Price per Unit,Total Value,Fees,Net Amount\n";
+        let csv = "Date,Type,Coin,Amount,Price,Total\n";
 
-        transactions.forEach((tx) => {
+        [...transactions].reverse().forEach((tx) => {
+          const qty =
+            tx.type === "BUY" ? getBuyQuantity(tx) : getSellQuantity(tx);
           csv +=
             [
-              tx.date,
-              tx.type,
+              getDateValue(tx),
+              tx.type === "BUY" ? "Buy" : "Sell",
               tx.crypto,
-              tx.amount.toFixed(8),
-              tx.price.toFixed(2),
-              tx.totalValue.toFixed(2),
-              tx.fees.toFixed(2),
-              tx.netAmount.toFixed(2),
+              formatAmount(qty),
+              Number(tx.price).toFixed(2),
+              Number(tx.totalValue).toFixed(2),
             ].join(",") + "\n";
         });
 
@@ -1528,50 +1296,11 @@
         const type = document.getElementById("type").value;
         const totalValue = amount * price;
 
-        // Fee is always 0.1% of total value
-        const feeValue = totalValue * 0.001; // 0.1% of total value in USD
-
-        // Display more precision for small fees, standard precision for larger ones
-        const feeDisplay =
-          feeValue < 0.01 ? feeValue.toFixed(6) : feeValue.toFixed(2);
-        document.getElementById("fees").value = feeDisplay;
-
-        // Update display to show what you'll actually receive
-        updateReceivedDisplay(amount, price, totalValue, feeValue, type);
-      }
-
-      function updateReceivedDisplay(
-        amount,
-        price,
-        totalValue,
-        feeValue,
-        type
-      ) {
-        const amountLabel = document.querySelector('label[for="amount"]');
-
-        // Check if label element exists (DOM might not be ready)
-        if (!amountLabel) {
-          console.warn("Amount label not found - DOM might not be ready");
-          return;
-        }
-
-        if (amount > 0 && price > 0) {
-          if (type === "BUY") {
-            // For BUY: show crypto amount received after fee deduction
-            const feeInCrypto = feeValue / price;
-            const receivedCrypto = amount - feeInCrypto;
-            amountLabel.innerHTML = `Amount (You'll receive: ${receivedCrypto.toFixed(
-              8
-            )} ${document.getElementById("crypto").value || "crypto"})`;
-          } else {
-            // For SELL: show USD proceeds after fee deduction
-            const receivedUSD = totalValue - feeValue;
-            amountLabel.innerHTML = `Amount (You'll receive: $${receivedUSD.toFixed(
-              2
-            )})`;
-          }
-        } else {
-          amountLabel.innerHTML = "Amount";
+        const feeValue = totalValue * 0.001;
+        const feesEl = document.getElementById("fees");
+        if (feesEl) {
+          feesEl.value =
+            feeValue < 0.01 ? feeValue.toFixed(6) : feeValue.toFixed(2);
         }
       }
 
@@ -1602,20 +1331,17 @@
         }
       }
 
-      // Initialize the application
-      document.addEventListener("DOMContentLoaded", async () => {
-        console.log("🚀 Crypto Trading Tracker initialized");
-        initializeFeeCalculation();
-        await loadTransactions();
-      });
-
-      // Also initialize if DOM is already loaded
-      if (document.readyState === "loading") {
-        // Still loading, wait for DOMContentLoaded
-      } else {
-        // DOM already loaded
+      function initApp() {
+        if (window.__cryptoTrackerInit) return;
+        window.__cryptoTrackerInit = true;
         initializeFeeCalculation();
         loadTransactions();
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initApp);
+      } else {
+        initApp();
       }
     </script>
   </body>

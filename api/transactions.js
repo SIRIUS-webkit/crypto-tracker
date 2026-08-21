@@ -34,7 +34,8 @@ module.exports = async (req, res) => {
 
     if (req.method === "POST") {
       // POST /api/transactions - Create new transaction
-      const { date, type, crypto, amount, price, fees } = req.body;
+      const { date, type, crypto, amount, price, fees, receivedAmount, receivedProceeds } =
+        req.body;
 
       // Validate required fields
       if (!date || !type || !crypto || !amount || !price) {
@@ -79,6 +80,13 @@ module.exports = async (req, res) => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
+
+      if (receivedAmount != null && !isNaN(parseFloat(receivedAmount))) {
+        transaction.receivedAmount = parseFloat(receivedAmount);
+      }
+      if (receivedProceeds != null && !isNaN(parseFloat(receivedProceeds))) {
+        transaction.receivedProceeds = parseFloat(receivedProceeds);
+      }
 
       const result = await db.collection("transactions").insertOne(transaction);
 
